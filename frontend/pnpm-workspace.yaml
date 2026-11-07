@@ -1,0 +1,6 @@
+# Vite's pinned esbuild dependency needs its platform-binary installation check.
+# Keep build-script authorization version-specific and reject new unreviewed scripts.
+allowBuilds:
+  esbuild@0.28.2: true
+
+strictDepBuilds: true

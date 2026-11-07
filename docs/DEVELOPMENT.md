@@ -16,6 +16,14 @@ go mod verify
 
 Go 官方代理不可达时可为单次命令设置 `GOPROXY=https://goproxy.cn,direct`。保留 Go checksum 校验，勿关闭 GOSUMDB，勿提交本地路径 replace。
 
+### pnpm 依赖构建授权
+
+`frontend/pnpm-workspace.yaml` 显式允许锁文件中的 `esbuild@0.28.2` 执行安装脚本，并保留 `strictDepBuilds: true`。该文件需要和 package.json、pnpm-lock.yaml 一起提交，适用于本地、CI 和 Wails 的前端安装命令。
+
+若 CI 报 `ERR_PNPM_IGNORED_BUILDS`，表示依赖下载后有未授权构建脚本，不是锁文件过期。升级 esbuild 时先审查版本和脚本，再同步更新该白名单；不要在 CI 中关闭检查或允许全部依赖执行脚本。
+
+该修复已在 Node 22.23.4 / pnpm 11.26.0 下使用全新临时目录验证：没有配置时复现退出码 1；加入配置后 esbuild postinstall、冻结安装和前端生产构建均成功，锁文件内容不变。远端三平台结果以重新运行的 CI 为准。
+
 ## 测试
 
 ```sh
