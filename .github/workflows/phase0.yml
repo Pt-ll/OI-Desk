@@ -1,0 +1,50 @@
+name: Phase 0 technology validation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: npm install --global pnpm@11.26.0
+      - name: Linux native build libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+      - run: pnpm --dir frontend install --frozen-lockfile
+      - run: pnpm --dir frontend build
+      - run: go mod verify
+      - run: go test -v -timeout 90s ./...
+      - name: C++ process group probe (Unix)
+        if: runner.os != 'Windows'
+        env:
+          OIDESK_CPP_PROBE: '1'
+        run: go test -v -timeout 90s ./phase0 -run TestCPP
+      - run: pnpm --dir frontend exec playwright install --with-deps chromium
+      - run: cd frontend && pnpm test:phase0
+      - run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
+      - name: Native build
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            wails build -tags webkit2_41 -nocolour
+          elif [ "$RUNNER_OS" = macOS ]; then
+            ./scripts/phase0-macos-build.sh
+          else
+            wails build -nocolour
+          fi

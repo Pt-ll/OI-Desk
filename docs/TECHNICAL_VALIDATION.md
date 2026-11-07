@@ -1,95 +1,86 @@
-# 技术验证报告
+# Phase 0 技术验证报告
 
-## 1. 验证范围
+验证日期：2026-11-07（Asia/Shanghai）。依据：根目录 `SPEC.md` 2.0.0。Wails 版本变更已获用户确认。本阶段仅建立技术探针和最小工程，尚未开发业务功能，也未开始 Phase 1。
 
-本报告对应 `SPEC.md` 的 Phase 0 要求：确认 Wails、Go、Vue 3、TypeScript、SQLite、插件隔离、系统密钥存储、AI Provider、流式响应和 C++ 独立进程的可行性。当前只做环境和设计验证，不创建应用代码。
+## 1. 仓库与初始化
 
-## 2. 仓库状态
+- Git 已初始化，分支 `main`，远程 `https://github.com/Pt-ll/OI-Desk.git`。
+- 最小工程包含 `main.go`、`app.go`、`go.mod`、`go.sum`、`wails.json`、`frontend/` 和 `build/`。
+- 新增文件与文档暂存于工作树，未自动提交或推送。
+- `SPEC.md` 保持原样。该文件是实际规范入口；规范内提及的 `PROJECT_SPEC.md` 与 `AGENTS.md` 当前不存在。
 
-执行目录为 `/Users/pt.ll/Desktop/OIDesk`。目录中只有 `SPEC.md`，`git status` 返回 `fatal: not a git repository`，说明仓库尚未初始化。没有发现 `AGENTS.md`、`go.mod`、`package.json`、Wails 工程或现有迁移文件。
+## 2. 已锁定版本
 
-## 3. 本机工具链
-
-| 工具 | 本机结果 | 结论 |
-|---|---:|---|
-| OS | macOS 27.2，Darwin ARM64 | 当前验证主机是 Apple Silicon；不能代替 Windows/Linux 构建验证 |
-| Git | 2.53.0 | 已安装，仓库尚未初始化 |
-| Go | 1.26.2 | 可作为当前开发机工具；最终版本写入 `go.mod` 和 CI |
-| Node.js | 25.6.1 | 可运行 JavaScript 工具，但不是推荐的 LTS 基线 |
-| pnpm | 11.26.0 | 可作为包管理器，提交锁文件 |
-| SQLite CLI | 3.54.0 | 本机 SQLite 可用 |
-| C/C++ 编译器 | Apple Clang 21 | 可验证对拍编译流程；Windows/Linux 编译器仍需 CI 验证 |
-| Wails CLI | 未安装 | Phase 0 需要安装并锁定 |
-
-本机 Go 代理环境变量等价于错误的 `https://goproxy.cn,direc`，导致 `go list -m` 直接失败。修正为 `https://proxy.golang.org,direct` 后，官方代理和 `wails.io` 仍发生网络连接超时。npm registry 查询也未能完成。没有把失败的网络结果当成版本或 API 证据。
-
-SQLite CLI 的外键和 WAL 最小测试通过（SQLite 3.54.0）。Node 25.6.1 提供实验性的 `node:sqlite`，但项目不依赖它；缓存中可见 TypeScript 5.9.3。Apple Clang 能生成 C++17 object file，但链接一个最小可执行文件时遇到本机 macOS 27 SDK `.tbd` 的 `unknown architecture` 错误，因此对拍器的完整编译运行必须在 Phase 0 修复 SDK 或转入 CI 后再验收。
-
-## 4. 版本选择
-
-### Wails
-
-选择 **Wails v2.10.2**。这是 v2 稳定线路的精确目标版本；Phase 0 网络恢复后必须用模块下载、最小工程构建和官方文档再次确认该 tag 可用，再写入 `go.mod` 和工具链锁定文件。选择理由：
-
-1. SPEC 要求在 v2/v3 中二选一；v2 的文档、模板和生态更成熟。
-2. v2 的绑定模型、运行时事件和 asset server 足够承载 Vue 前端及受控插件 iframe。
-3. v3 在设计阶段存在较高 API 迁移风险，不能与 v2 API 混用。
-
-官方文档基线应为：
-
-- https://wails.io/docs/v2.10/
-- https://wails.io/docs/v2.10/gettingstarted/installation
-- https://wails.io/docs/v2.10/howdoesitwork/
-- https://wails.io/docs/v2.10/reference/runtime/
-
-由于本次无法访问官方站点，官方文档阅读和 v2.10.2 下载验证无法在本轮完成，必须在 Phase 0 的最小 Wails 工程中复核。`go.mod` 只允许出现一个 Wails 主版本。
-
-### Go、前端和 SQLite
-
-最终锁定策略如下：
-
-- Go：选择 Go 1.26.2 作为当前开发基线；Phase 0 用 Wails v2.10.2 的真实构建确认兼容性，并在 CI 固定同一补丁版本。
-- Node.js：使用 Node 22 LTS 作为开发和 CI 基线，避免把 Node 25 的非 LTS 行为带入跨平台构建；`engines` 约束为 `>=22.12.0`。
-- Vue：Vue 3.5.x。
-- TypeScript：TypeScript 5.9.x。
-- Vite：Vite 6.x，使用与 Node 22 LTS 相容的补丁版本；Wails 前端构建通过 Vite 输出静态资源。
-- SQLite：SQLite 3.x；应用层使用 `database/sql + sqlc + modernc.org/sqlite`。这样数据库驱动不额外依赖 CGO，Wails 本身所需的 WebView 构建依赖仍按平台准备。
-- 包管理：pnpm 11，提交 `pnpm-lock.yaml`。
-
-Vue、TypeScript 和 Vite 的精确补丁版本必须在联网的 Phase 0 中通过 `pnpm add`、`pnpm install --frozen-lockfile` 和生产构建确认后写入锁文件。不要使用浮动的 `latest`。
-
-### 为什么不使用 GORM 或 mattn/go-sqlite3
-
-SPEC 允许 GORM 或 sqlc。这里选 sqlc，因为查询和迁移可以保持显式、可审查，并能把平台一致性约束放在 SQL 中。`mattn/go-sqlite3` 会把 CGO 编译链带入数据库层，增加 Windows 和交叉编译的变数；Wails 的 WebView 依赖已经需要按平台准备，因此没有必要再扩大数据库驱动的 CGO 面。
-
-## 5. 最小验证矩阵
-
-| 项目 | 最小验证 | 通过标准 |
+| 项目 | 版本 / 方式 | 证据 |
 |---|---|---|
-| Wails | 创建空 v2 工程、`wails dev`、`wails build` | Go 与 Vue 绑定可调用，三平台构建命令明确 |
-| Vue/TS/Vite | `pnpm install --frozen-lockfile`、类型检查、生产构建 | 无类型错误，静态资源能被 Wails asset server 加载 |
-| SQLite | 打开数据库、启用外键、迁移、事务、WAL、备份 API | 重启后数据存在，迁移可重复执行，备份可恢复 |
-| iframe | `sandbox="allow-scripts"`、CSP、禁止父页面访问 | 插件只能通过 Port 调用允许 API |
-| MessageChannel | 请求/响应、超时、取消、流式事件 | 关联 ID 正确，断开可回收，超大消息被拒绝 |
-| Keychain | macOS Keychain；Windows Credential Manager；Linux Secret Service | 密钥只返回给 Go Provider，插件和日志不可见 |
-| AI | 一个 OpenAI-compatible mock server | 普通、流式、取消、认证/限流/超时错误均可分类 |
-| C++ | 编译、启动、超时、输出上限、进程树终止 | 主程序不阻塞，不残留子进程 |
+| Wails | **v2.17.0**，仅 v2 API | CLI、`go.mod`、官方 tag、完整桌面构建 |
+| Go | **1.26.2** | `go.mod`、本机测试、CI 版本文件 |
+| Node | **22.23.4 LTS** | `.node-version`；临时下载后实际构建和浏览器测试通过 |
+| pnpm | **11.26.0** | `frontend/package.json` 的 packageManager、lockfile |
+| Vue | **3.5.45** | package.json 与 pnpm-lock.yaml |
+| TypeScript | **5.9.3** | 类型检查通过 |
+| Vite | **7.3.7** | 生产构建通过 |
+| @vitejs/plugin-vue | **6.0.10** | 锁文件及实际生产构建 |
+| vue-tsc | **2.2.12** | 类型检查通过 |
+| Playwright | **1.65.0** | 固定开发依赖、Chromium 自动化测试 |
+| SQLite Go 驱动 | **modernc.org/sqlite v1.62.0** | 真实 Go 驱动事务/外键/备份测试 |
+| 密钥环库 | **github.com/zalando/go-keyring v0.2.8** | macOS Keychain 临时凭据往返 |
+| 数据访问规划 | `database/sql + sqlc` | sqlc 查询生成与业务迁移在 Phase 1 实施 |
 
-## 6. 跨平台结论
+本机全局 Node 仍为 25.6.1；验证使用单独下载到临时目录的 Node 22.23.4，不修改用户系统 Node。Node 的依赖下限设置为 `>=22.13.0`，满足 Vite 7 和 pnpm 11 的共同要求。UI 的 Pinia/Tailwind 等依赖在各自实施阶段安装，不提前引入所有业务依赖。
 
-Wails 的前端代码可保持跨平台，但系统能力必须分层：
+## 3. 官方文档阅读与源码复核
 
-- Windows：WebView2 Runtime、Credential Manager、Job Object 进程组、MSVC 或 LLVM/MinGW。
-- macOS：WKWebView、Keychain Services、进程组/信号、Apple Clang；需要处理应用签名和 hardened runtime。
-- Linux：WebKitGTK 4.1、Secret Service（如可用）、process group/cgroup；发行版需要明确 WebKitGTK 开发包。
+Wails 官网直接访问触发 Cloudflare 403；已改用官方 GitHub API 获取 **v2.17.0 tag** 下的原始文档，解码并完整阅读：
 
-统一接口由 Go 定义，平台实现放在 `backend/platform/{windows,darwin,linux}`。没有系统密钥服务时必须报错并让用户选择退出或显式配置的安全外部凭据方案，不能静默写入 SQLite。
+- [Installation](https://github.com/wailsapp/wails/blob/v2.17.0/website/docs/gettingstarted/installation.mdx)，Git blob `6bdf220dee28b6701cdfed0df18f1a1d3c76f161`。
+- [Creating a Project](https://github.com/wailsapp/wails/blob/v2.17.0/website/docs/gettingstarted/firstproject.mdx)，Git blob `973b03c58d14831833f7169519e4dde1a5aee8bf`。
+- [Building](https://github.com/wailsapp/wails/blob/v2.17.0/website/docs/gettingstarted/building.mdx)，Git blob `c4c16ea48442d52b8f953e370d36d55335047e11`。
 
-## 7. 需要在 Phase 0 重新确认的事项
+对应版本确认：Vue-TS 模板为 `wails init -t vue-ts`；`wails build` 输出到 `build/bin/`；Windows 使用 WebView2；macOS 使用 Xcode 工具链；Ubuntu 24.04 使用 WebKitGTK 4.1 并附加 `-tags webkit2_41`。
 
-1. Wails v2.10.x 的最新补丁版本及其支持的 Go 版本。
-2. Wails v2 asset server 下 iframe 的实际来源、CSP 和沙箱行为。
-3. Vue 3.5.x、TypeScript 5.9.x、Vite 6.x 的 npm peer dependency。
-4. `modernc.org/sqlite` 与选定 Go 补丁版本的构建结果。
-5. 三个平台 WebView、密钥环和 C++ 进程组的 CI 构建。
+安装说明仍提及较早的 Go 最低版本，而 v2.17.0 模块实际声明 `go 1.25.0`。本项目依照真实模块和 SQLite 驱动要求固定 Go 1.26.2，不沿用旧页面的最低版本。
 
+同时阅读本地同版本 `pkg/options/assetserver/options.go`、`pkg/options/options.go`、macOS binding dispatcher 与 Linux pkg-config 声明，确认：
+
+- 静态资源找不到时可回退至 `AssetServer.Handler`，用于加载 Phase 0 iframe fixture。
+- macOS dispatcher 在后端拒绝非主 frame 的绑定调用。该结论来自对应版本源码；其他平台仍需各自原生实测。
+- 禁止将 `BindingsAllowedOrigins` 放开为任意来源。插件的生产权限检查仍需在 Phase 2 的 Go Runtime 实施。
+
+## 4. 本机测试结果
+
+| 验证项 | 结果 | 实际覆盖 |
+|---|---|---|
+| 依赖完整性 | 通过 | Go 模块校验；pnpm frozen lockfile 安装 |
+| Go 测试 | 通过 | `go test -count=1 -v -timeout 90s ./...`，包含下述探针 |
+| 前端类型检查/生产构建 | 通过 | Node 22.23.4 与本机 Node 25 均构建成功 |
+| Wails 完整构建 | 通过 | 使用 Xcode SDK 后编译、打包、自签名成功 |
+| 原生 WKWebView | 通过 | 应用启动后打印 `PHASE0_WEBVIEW_RESULT binding=true isolation=true` 并自动退出 |
+| SQLite Go 驱动 | 通过 | 外键拒绝、事务回滚、迁移版本表最小创建、备份后重开及恢复 |
+| SQLite CLI | 通过 | SQLite 3.54.0、WAL、事务、在线备份与恢复 |
+| Chromium iframe | 通过 | 8 项隔离/通信断言，1 个 Playwright 测试 |
+| 系统密钥环 | 通过（macOS） | 随机临时条目的写入/读取/删除；清理后确认不存在 |
+| AI HTTP mock | 通过 | 本机普通 JSON 请求、SSE chunk、流中取消、401/429/502 错误传播 |
+| C++ 独立进程 | 通过（macOS） | 编译/启动；进程组超时取消；子进程不能在取消后写标记文件 |
+| Windows/Linux 测试包编译 | 通过 | CGO_ENABLED=0，Windows amd64 与 Linux amd64 的 Phase 0 测试包交叉编译成功；不代表原生桌面程序通过 |
+| Windows/Linux 原生运行 | 待 CI | 已提供三平台 workflow；尚未推送执行，不能宣称通过 |
+
+AI 测试只验证受控本机 HTTP 传输契约，不使用真实 API Key，不产生外部调用费用，**不代表已经验证 OpenAI/Anthropic/任一兼容服务的协议或账号**。真实 Provider 接入和错误归一化属于 Phase 3。
+
+插件探针中的 `theme.get` 白名单、伪造身份拒绝和消息大小限制由 fixture 宿主执行，证明传输方案可行；不是已交付的 Go Plugin Runtime。生产环境的后端二次鉴权、安装生命周期、速率限制与持久化权限仍由 Phase 2 实现。
+
+## 5. SDK 阻断与修复
+
+初次 Wails/C++ 最终链接失败，错误为 SDK `.tbd` 含 `arm64e.x1` 架构。实际原因是 Xcode 21 工具链使用了较新的 Command Line Tools macOS 27.2 SDK。项目内 `scripts/phase0-macos-build.sh` 为该次构建选择 Xcode 自带 SDK，随后完整构建和 C++ 进程测试通过。
+
+该脚本不修改系统 SDK、不编辑 `.tbd` 文件、不更改全局 xcode-select。`wails doctor` 在当前环境仍无法取得系统信息；它的失败没有被视为成功，但独立的真实构建和原生启动证据已经取得。
+
+## 6. 跨平台验证边界
+
+| 平台 | 桌面依赖 | 凭据服务 | 进程终止方案 | 当前状态 |
+|---|---|---|---|---|
+| Windows | WebView2 | Credential Manager | Job Object，挂起创建后加入 Job 再恢复 | CI 已配置，真实运行待验收 |
+| macOS ARM64 | WKWebView、配套 Xcode SDK | Keychain | 独立 process group | 本机编译、运行、密钥环、进程组通过 |
+| Linux | GTK3、WebKitGTK 4.1 | D-Bus Secret Service | process group；强限制后续评估 cgroup | CI 已配置，真实运行待验收 |
+
+CI 默认不自动写系统密钥环，因为无图形会话时该服务可能不存在。没有密钥服务必须显式失败，不落盘明文。插件 iframe 不是 OS 级 CPU/内存隔离，也不能承诺任意恶意脚本不会冻结共享 WebView；这是插件阶段的剩余风险。

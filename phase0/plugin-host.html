@@ -1,0 +1,44 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'">
+<title>OI-Desk Phase 0 Plugin Host</title>
+<p id="status">Starting handshake…</p>
+<script>
+  const status = document.querySelector('#status');
+  const frame = document.createElement('iframe');
+  frame.id = 'plugin';
+  frame.sandbox = 'allow-scripts';
+  const nonce = crypto.randomUUID();
+  const channel = new MessageChannel();
+  const pluginId = 'org.oidesk.phase0';
+  let ready = false;
+  const timer = setTimeout(() => finish(false, 'handshake timeout'), 4000);
+  function finish(success, detail) {
+    clearTimeout(timer);
+    status.dataset.success = String(success);
+    status.textContent = detail;
+    if (window.parent !== window) window.parent.postMessage({type:'phase0-result', success, detail}, '*');
+  }
+  channel.port1.onmessage = ({data}) => {
+    if (data?.type === 'hello') {
+      if (ready || data.nonce !== nonce || data.apiVersion !== 1) return finish(false, 'invalid handshake');
+      ready = true;
+      channel.port1.postMessage({type:'ready', pluginId, apiVersion:1});
+      return;
+    }
+    if (!ready) return;
+    if (data?.type === 'result') return finish(data.success === true, data.detail);
+    if (data?.type !== 'request' || typeof data.id !== 'string' || typeof data.method !== 'string') return;
+    const reject = (code) => channel.port1.postMessage({id:data.id, success:false, error:{code, message:code}});
+    if (JSON.stringify(data).length > 4096) return reject('REQUEST_TOO_LARGE');
+    if (data.pluginId !== undefined) return reject('IDENTITY_SPOOFED');
+    // This is a transport probe only. Production authorization must run in Go as well.
+    if (data.method !== 'theme.get') return reject('PERMISSION_DENIED');
+    channel.port1.postMessage({id:data.id, success:true, data:{theme:'dark'}});
+  };
+  frame.addEventListener('load', () => {
+    frame.contentWindow.postMessage({type:'init', nonce}, '*', [channel.port2]);
+  }, {once:true});
+  frame.src = 'plugin.html';
+  document.body.append(frame);
+</script>

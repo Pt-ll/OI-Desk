@@ -2,9 +2,9 @@
 
 ## 1. Phase 0：技术验证与架构确认
 
-本次交付为 Phase 0 的设计材料，不实现业务功能。用户确认后，Phase 0 的下一步是初始化 Git、锁定 Wails/Go/Node/npm 版本，创建最小 Wails 工程，完成通信、iframe、MessageChannel、Keychain、AI mock、流式和 C++ 进程验证，并记录三平台构建差异。
+Phase 0 已完成设计材料、Git/Wails 最小工程初始化、Go/Vue/TypeScript/SQLite 验证、AI 流式探针和插件通信探针。本机 SDK linker 问题已通过选择配套 Xcode SDK 解决，原生 WKWebView 探针也已通过。Windows/Linux 的原生运行与密钥环行为仍待 CI/实际环境验收。
 
-通过门槛：Wails v2.10.2 精确版本可复现；前端能 `install --frozen-lockfile` 和生产构建；SQLite 迁移/备份可恢复；插件越权请求被后端拒绝；流式请求可取消；超时不会残留 C++ 进程。
+通过门槛：Wails v2.17.0 精确版本可复现；前端能 `install --frozen-lockfile` 和生产构建；SQLite 迁移/备份可恢复；插件越权请求被后端拒绝；流式请求可取消；超时不会残留 C++ 进程。
 
 ## 2. 后续阶段
 
@@ -32,7 +32,7 @@
 | SQLite 跨平台构建 | 中 | sqlc + modernc.org/sqlite；固定 WAL/外键/迁移；CI 验证 |
 | AI Provider 协议差异 | 高 | Provider Adapter 和统一错误码；mock 测试流式/取消/限流 |
 | AI 数据外泄 | 高 | 最小数据、逐插件权限、发送前展示、日志脱敏、无 key 暴露 |
-| C++ 工具链或 SDK 不一致 | 高 | 当前 macOS 链接测试被 SDK `.tbd` 错误阻断；Phase 0 固定编译器/SDK 并在三平台 CI 验证 |
+| C++ 工具链或 SDK 不一致 | 高 | 本机通过配套 Xcode SDK 修复并完成链接；继续在三平台 CI 固定编译器/SDK |
 | C++ 子进程残留 | 高 | 每次任务独立进程组/Job Object，超时杀进程树并测试残留 |
 | 大量提交阻塞 UI | 中 | 分页、后台任务、Wails 事件进度、索引和租约 |
 | Node 25/非 LTS 差异 | 中 | Node 22 LTS 作为 CI 基线，锁 pnpm lockfile |
@@ -40,5 +40,5 @@
 
 ## 4. 当前阻塞项
 
-网络环境无法完成官方模块和 npm 下载，因此精确 Wails 补丁版本、依赖 lockfile 和真实平台 API 探针不能在本轮伪造完成。恢复网络后，优先执行 TECHNICAL_VALIDATION.md 的最小矩阵，再开始 Phase 0 实现。
+核心依赖下载、锁文件、官方 v2.17.0 tag 文档阅读及本机最小矩阵已完成；Wails 官网直连仍受 Cloudflare 限制，已通过官方 GitHub API 读取原文。Windows/Linux workflow 已加入但尚未推送运行，不能宣称完成三平台验收。真实 OJ 与 AI Provider 仍在后续阶段实现，当前不消耗真实凭据。
 

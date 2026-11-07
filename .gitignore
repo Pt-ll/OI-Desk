@@ -1,0 +1,11 @@
+build/bin
+node_modules
+frontend/dist
+*.app
+OI-Desk
+.DS_Store
+.pnpm-store/
+frontend/test-results/
+frontend/playwright-report/
+*.test
+*.test.exe

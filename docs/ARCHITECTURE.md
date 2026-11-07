@@ -2,23 +2,23 @@
 
 ## 1. 设计决策
 
-OI-Desk 采用单进程 Wails 桌面壳、Go 核心服务、Vue 3 前端和受控 Web 插件运行时。所有跨层调用都经过接口；前端和插件不能直接操作 SQLite，插件不能直接拿到 Go 对象、凭据或其他插件目录。
+OI-Desk 采用 Wails 桌面壳、单个 Go 核心服务进程、Vue 3 前端和受控 Web 插件运行时。所有跨层调用都经过接口；前端和插件不能直接操作 SQLite，插件不能直接拿到 Go 对象、凭据或其他插件目录。
 
 ### 最终技术选型
 
 | 层 | 选型 |
 |---|---|
-| Desktop shell | Wails **v2.10.2**，只使用 v2 API |
+| Desktop shell | Wails **v2.17.0**，只使用 v2 API |
 | Backend | Go **1.26.2** 基线，`slog`、`context`、标准库 HTTP |
 | Database | SQLite 3.x + `database/sql` + `sqlc` + `modernc.org/sqlite` |
-| Frontend | Vue **3.5.x** + TypeScript **5.9.x** + Vite **6.x** |
+| Frontend | Vue **3.5.45** + TypeScript **5.9.3** + Vite **7.3.7** |
 | State/style | Pinia 3.x、Tailwind CSS 4.x、Lucide |
 | Charts/editor | ECharts 5.x、Monaco Editor、math.js、Plotly.js |
-| Package manager | Node **22 LTS** + pnpm 11 |
+| Package manager | Node **22.23.4 LTS** + pnpm **11.26.0** |
 | Credentials | Windows Credential Manager / macOS Keychain / Linux Secret Service |
 | Plugin UI | Sandboxed iframe + MessageChannel/MessagePort + backend authorization |
 
-精确的前端补丁版本和 Wails 下载/构建结果受本次网络限制影响，必须按 `TECHNICAL_VALIDATION.md` 在 Phase 0 复核后写入锁文件。表中的主版本和职责边界在后续实现中保持稳定。
+核心工具链已通过本机最小工程验证，并写入 go.mod、go.sum 和 pnpm-lock.yaml；运行证据与跨平台未验收范围见 `TECHNICAL_VALIDATION.md`。Pinia、Tailwind、编辑器及图表依赖待对应业务阶段再安装和锁定。
 
 推荐的职责边界：
 
@@ -119,7 +119,7 @@ flowchart LR
 
 Wails v2 只绑定少量稳定的应用命令，例如应用设置、插件管理、同步任务控制、AI Gateway 请求和备份。长任务返回任务 ID，并通过 Wails 事件发送进度；不把数据库模型直接暴露给前端。前端只接收版本化 DTO 和错误码。
 
-Wails 版本冻结后，所有绑定代码只能引用该主版本的 API；构建脚本、运行时事件、asset server 和窗口配置必须对照 v2.10.x 官方文档核验。
+Wails 版本冻结后，所有绑定代码只能引用该主版本的 API；构建脚本、运行时事件、asset server 和窗口配置已对照 v2.17.0 官方 tag 文档与源码核验，参考记录见 TECHNICAL_VALIDATION.md。
 
 ## 5. 备份与恢复边界
 

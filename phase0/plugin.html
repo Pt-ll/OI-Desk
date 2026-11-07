@@ -1,0 +1,43 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>OI-Desk Phase 0 Plugin</title>
+<p id="state">Waiting for host…</p>
+<script>
+  window.addEventListener('message', event => {
+    if (event.source !== parent || event.data?.type !== 'init' || !event.ports[0]) return;
+    const port = event.ports[0];
+    const pending = new Map();
+    let counter = 0;
+    function request(method, extra = {}) {
+      return new Promise((resolve, reject) => {
+        const id = String(++counter);
+        const timer = setTimeout(() => { pending.delete(id); reject(Error('request timeout')); }, 1000);
+        pending.set(id, {resolve, timer});
+        port.postMessage({id, type:'request', method, ...extra});
+      });
+    }
+    async function run() {
+      const checks = [];
+      try { parent.document.body; checks.push(false); } catch { checks.push(true); }
+      try { localStorage.setItem('escape','1'); checks.push(false); } catch { checks.push(true); }
+      checks.push(typeof window.go === 'undefined');
+      try { await fetch('https://example.invalid/'); checks.push(false); } catch { checks.push(true); }
+      checks.push((await request('theme.get')).data?.theme === 'dark');
+      checks.push((await request('submission.list')).error?.code === 'PERMISSION_DENIED');
+      checks.push((await request('theme.get', {pluginId:'other-plugin'})).error?.code === 'IDENTITY_SPOOFED');
+      checks.push((await request('theme.get', {payload:'x'.repeat(5000)})).error?.code === 'REQUEST_TOO_LARGE');
+      const success = checks.every(Boolean);
+      const detail = `${checks.filter(Boolean).length}/${checks.length} isolation and transport checks passed`;
+      document.querySelector('#state').textContent = detail;
+      port.postMessage({type:'result', success, detail});
+    }
+    port.onmessage = ({data}) => {
+      if (data.type === 'ready') { run().catch(e => port.postMessage({type:'result', success:false, detail:e.message})); return; }
+      const item = pending.get(data.id);
+      if (item) { clearTimeout(item.timer); pending.delete(data.id); item.resolve(data); }
+    };
+    port.start();
+    port.postMessage({type:'hello', nonce:event.data.nonce, apiVersion:1});
+  }, {once:true});
+</script>
