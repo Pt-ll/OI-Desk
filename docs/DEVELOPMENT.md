@@ -61,4 +61,4 @@ wails build
 
 ## CI 和未验证范围
 
-`.github/workflows/phase0.yml` 在 Windows、macOS、Ubuntu 24.04 执行冻结安装、Go 测试、浏览器测试与原生构建。当前只写入本地 workflow，尚未推送或取得远端运行结果。CI 的无头 Chromium 测试不替代各平台原生 WebView 测试。Windows Job Object、Linux Secret Service 和跨平台安装包分发仍需后续验收。
+`.github/workflows/phase0.yml` 在 Windows、macOS、Ubuntu 24.04 执行冻结安装、Go 测试、浏览器测试与原生构建，当前远程运行已全部通过。CI 的无头 Chromium 测试不替代各平台交互式 WebView 测试；Windows Job Object、Linux Secret Service 和跨平台安装包分发仍需后续专项验收。

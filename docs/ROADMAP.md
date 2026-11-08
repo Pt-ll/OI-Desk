@@ -2,7 +2,7 @@
 
 ## 1. Phase 0：技术验证与架构确认
 
-Phase 0 已完成设计材料、Git/Wails 最小工程初始化、Go/Vue/TypeScript/SQLite 验证、AI 流式探针和插件通信探针。本机 SDK linker 问题已通过选择配套 Xcode SDK 解决，原生 WKWebView 探针也已通过。Windows/Linux 的原生运行与密钥环行为仍待 CI/实际环境验收。
+Phase 0 已完成设计材料、Git/Wails 最小工程初始化、Go/Vue/TypeScript/SQLite 验证、AI 流式探针和插件通信探针。本机 SDK linker 问题已通过选择配套 Xcode SDK 解决，原生 WKWebView 探针也已通过。远程 Windows、macOS、Ubuntu 24.04 CI 全部通过；业务功能尚未开始。
 
 通过门槛：Wails v2.17.0 精确版本可复现；前端能 `install --frozen-lockfile` 和生产构建；SQLite 迁移/备份可恢复；插件越权请求被后端拒绝；流式请求可取消；超时不会残留 C++ 进程。
 
@@ -40,5 +40,5 @@ Phase 0 已完成设计材料、Git/Wails 最小工程初始化、Go/Vue/TypeScr
 
 ## 4. 当前阻塞项
 
-核心依赖下载、锁文件、官方 v2.17.0 tag 文档阅读及本机最小矩阵已完成；Wails 官网直连仍受 Cloudflare 限制，已通过官方 GitHub API 读取原文。Windows/Linux workflow 已加入但尚未推送运行，不能宣称完成三平台验收。真实 OJ 与 AI Provider 仍在后续阶段实现，当前不消耗真实凭据。
+核心依赖下载、锁文件、官方 v2.17.0 tag 文档阅读、本机最小矩阵和三平台 CI 已完成；Wails 官网直连仍受 Cloudflare 限制，已通过官方 GitHub API 读取原文。Windows/Linux 交互式桌面和密钥环仍需实际桌面环境专项验收。真实 OJ 与 AI Provider 仍在后续阶段实现，当前不消耗真实凭据。
 

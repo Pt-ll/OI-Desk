@@ -1,12 +1,12 @@
 # Phase 0 技术验证报告
 
-验证日期：2026-11-07（Asia/Shanghai）。依据：根目录 `SPEC.md` 2.0.0。Wails 版本变更已获用户确认。本阶段仅建立技术探针和最小工程，尚未开发业务功能，也未开始 Phase 1。
+验证日期：2026-11-08（Asia/Shanghai）。依据：根目录 `SPEC.md` 2.0.0。Wails 版本变更已获用户确认。本阶段仅建立技术探针和最小工程，尚未开发业务功能，也未开始 Phase 1。
 
 ## 1. 仓库与初始化
 
 - Git 已初始化，分支 `main`，远程 `https://github.com/Pt-ll/OI-Desk.git`。
 - 最小工程包含 `main.go`、`app.go`、`go.mod`、`go.sum`、`wails.json`、`frontend/` 和 `build/`。
-- 新增文件与文档暂存于工作树，未自动提交或推送。
+- Phase 0 工程、探针和文档已提交到 `main`；当前提交已通过远程三平台 CI。
 - `SPEC.md` 保持原样。该文件是实际规范入口；规范内提及的 `PROJECT_SPEC.md` 与 `AGENTS.md` 当前不存在。
 
 ## 2. 已锁定版本
@@ -63,7 +63,7 @@ Wails 官网直接访问触发 Cloudflare 403；已改用官方 GitHub API 获�
 | AI HTTP mock | 通过 | 本机普通 JSON 请求、SSE chunk、流中取消、401/429/502 错误传播 |
 | C++ 独立进程 | 通过（macOS） | 编译/启动；进程组超时取消；子进程不能在取消后写标记文件 |
 | Windows/Linux 测试包编译 | 通过 | CGO_ENABLED=0，Windows amd64 与 Linux amd64 的 Phase 0 测试包交叉编译成功；不代表原生桌面程序通过 |
-| Windows/Linux 原生运行 | 待 CI | 已提供三平台 workflow；尚未推送执行，不能宣称通过 |
+| Windows/Linux 原生运行 | 通过 CI | 远程 Windows、macOS、Ubuntu 24.04 workflow 全部通过；本机仍只直接运行 macOS |
 
 AI 测试只验证受控本机 HTTP 传输契约，不使用真实 API Key，不产生外部调用费用，**不代表已经验证 OpenAI/Anthropic/任一兼容服务的协议或账号**。真实 Provider 接入和错误归一化属于 Phase 3。
 
@@ -79,8 +79,8 @@ AI 测试只验证受控本机 HTTP 传输契约，不使用真实 API Key，不
 
 | 平台 | 桌面依赖 | 凭据服务 | 进程终止方案 | 当前状态 |
 |---|---|---|---|---|
-| Windows | WebView2 | Credential Manager | Job Object，挂起创建后加入 Job 再恢复 | CI 已配置，真实运行待验收 |
+| Windows | WebView2 | Credential Manager | Job Object，挂起创建后加入 Job 再恢复 | CI 通过；真实交互式 WebView/密钥环仍需专门桌面测试 |
 | macOS ARM64 | WKWebView、配套 Xcode SDK | Keychain | 独立 process group | 本机编译、运行、密钥环、进程组通过 |
-| Linux | GTK3、WebKitGTK 4.1 | D-Bus Secret Service | process group；强限制后续评估 cgroup | CI 已配置，真实运行待验收 |
+| Linux | GTK3、WebKitGTK 4.1 | D-Bus Secret Service | process group；强限制后续评估 cgroup | CI 通过；真实交互式 WebView/密钥环仍需专门桌面测试 |
 
 CI 默认不自动写系统密钥环，因为无图形会话时该服务可能不存在。没有密钥服务必须显式失败，不落盘明文。插件 iframe 不是 OS 级 CPU/内存隔离，也不能承诺任意恶意脚本不会冻结共享 WebView；这是插件阶段的剩余风险。
