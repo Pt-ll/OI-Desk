@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { GetSetting, SetSetting } from '../../wailsjs/go/main/App'
 import type { AppError } from '../types/errors'
 
 export type Theme = 'dark' | 'light'
@@ -17,9 +18,31 @@ export const useShellStore = defineStore('shell', {
   state: () => ({ theme: 'dark' as Theme, activeRoute: 'dashboard' as RouteId, error: null as AppError | null, bindingOK: false, pluginOK: false }),
   getters: { activeNav: (state) => navItems.find((item) => item.id === state.activeRoute) ?? navItems[0] },
   actions: {
-    initialize() { if (typeof window !== 'undefined') { const saved = window.localStorage.getItem(THEME_KEY); if (saved === 'dark' || saved === 'light') this.theme = saved }; this.applyTheme() },
+    async initialize() {
+      if (typeof window !== 'undefined') {
+        const saved = window.localStorage.getItem(THEME_KEY)
+        if (saved === 'dark' || saved === 'light') this.theme = saved
+      }
+      this.applyTheme()
+      try {
+        const setting = await GetSetting('theme')
+        const backendTheme = JSON.parse(setting.valueJson)
+        if (backendTheme === 'dark' || backendTheme === 'light') {
+          this.theme = backendTheme
+          this.applyTheme()
+          if (typeof window !== 'undefined') window.localStorage.setItem(THEME_KEY, backendTheme)
+        }
+      } catch {
+        // Static browser tests and first-launch before Wails startup use the local fallback.
+      }
+    },
     applyTheme() { if (typeof document !== 'undefined') document.documentElement.dataset.theme = this.theme },
-    setTheme(theme: Theme) { this.theme = theme; this.applyTheme(); if (typeof window !== 'undefined') window.localStorage.setItem(THEME_KEY, theme) },
+    setTheme(theme: Theme) {
+      this.theme = theme
+      this.applyTheme()
+      if (typeof window !== 'undefined') window.localStorage.setItem(THEME_KEY, theme)
+      void Promise.resolve().then(() => SetSetting('theme', JSON.stringify(theme), 'string')).catch(() => undefined)
+    },
     navigate(route: RouteId) { this.activeRoute = route; this.error = null },
     setError(error: AppError) { this.error = error },
     clearError() { this.error = null },

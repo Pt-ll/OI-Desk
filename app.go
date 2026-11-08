@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -14,6 +15,14 @@ import (
 type App struct {
 	ctx        context.Context
 	foundation *foundation.Runtime
+}
+
+type SettingDTO struct {
+	Key       string `json:"key"`
+	ValueJSON string `json:"valueJson"`
+	ValueType string `json:"valueType"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
 }
 
 // NewApp creates a new App application struct
@@ -55,6 +64,31 @@ func (a *App) shutdown(_ context.Context) {
 // Greet returns a greeting for the given name
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
+}
+
+func (a *App) GetSetting(key string) (SettingDTO, error) {
+	if a.foundation == nil {
+		return SettingDTO{}, errors.New("application foundation is not initialized")
+	}
+	setting, err := a.foundation.Settings.Get(a.ctx, key)
+	if err != nil {
+		return SettingDTO{}, err
+	}
+	return SettingDTO{Key: setting.Key, ValueJSON: setting.ValueJSON, ValueType: setting.ValueType, CreatedAt: setting.CreatedAt, UpdatedAt: setting.UpdatedAt}, nil
+}
+
+func (a *App) SetSetting(key, valueJSON, valueType string) error {
+	if a.foundation == nil {
+		return errors.New("application foundation is not initialized")
+	}
+	return a.foundation.Settings.Set(a.ctx, key, valueJSON, valueType)
+}
+
+func (a *App) DeleteSetting(key string) error {
+	if a.foundation == nil {
+		return errors.New("application foundation is not initialized")
+	}
+	return a.foundation.Settings.Delete(a.ctx, key)
 }
 
 // ReportFrontendProbe is a Phase 0 diagnostic, removed when Phase 1 begins.

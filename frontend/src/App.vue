@@ -18,7 +18,7 @@ async function onProbeResult(event: MessageEvent) {
 }
 
 onMounted(async () => {
-  shell.initialize()
+  await shell.initialize()
   window.addEventListener('message', onProbeResult)
   try {
     shell.setDiagnostics((await Greet('Phase 0')) === "Hello Phase 0, It's show time!", false)
