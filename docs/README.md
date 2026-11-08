@@ -14,6 +14,7 @@
 - [PHASE1_TASK1.md](PHASE1_TASK1.md)：Phase 1 / Task 1 持久化基础交付。
 - [PHASE1_TASK2.md](PHASE1_TASK2.md)：Phase 1 / Task 2 前端基础壳交付。
 - [PHASE1_TASK3.md](PHASE1_TASK3.md)：Phase 1 / Task 3 设置绑定与 Phase 1 收尾。
+- [PHASE2_TASK1.md](PHASE2_TASK1.md)：Phase 2 / Task 1 插件包与 Manifest 安全校验。
 - [ROADMAP.md](ROADMAP.md)：分阶段计划、验收门槛和风险清单。
 
 ## 当前状态
