@@ -2,10 +2,11 @@
 
 Go + Wails + Vue + SQLite 的 OI 训练工作台。产品和开发约束以 [SPEC.md](SPEC.md) 为准。
 
-当前处于 **Phase 0 技术验证**，尚未实现业务功能。Wails 固定为 **v2.17.0**。
+当前已完成 **Phase 0 技术验证**，并完成 **Phase 1 / Task 1：后端持久化基础**；尚未实现 OJ、插件或 AI 业务功能。Wails 固定为 **v2.17.0**。
 
 - [架构设计](docs/ARCHITECTURE.md)
 - [技术验证结果](docs/TECHNICAL_VALIDATION.md)
+- [Phase 1 / Task 1](docs/PHASE1_TASK1.md)
 - [开发与验证命令](docs/DEVELOPMENT.md)
 - [数据库审查](docs/DATABASE.md)
 - [插件设计](docs/PLUGIN_API.md)

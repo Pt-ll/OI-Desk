@@ -11,9 +11,10 @@
 - [OJ_API.md](OJ_API.md)：五个平台的适配器能力和同步接口。
 - [AI_GATEWAY.md](AI_GATEWAY.md)：AI 权限、凭据、流式与取消设计。
 - [DEVELOPMENT.md](DEVELOPMENT.md)：开发环境和验证命令。
+- [PHASE1_TASK1.md](PHASE1_TASK1.md)：Phase 1 / Task 1 持久化基础交付。
 - [ROADMAP.md](ROADMAP.md)：分阶段计划、验收门槛和风险清单。
 
 ## 当前状态
 
-Wails 固定为 v2.17.0。本机 Go/Vue/SQLite、Keychain、C++ 进程组、Chromium 和原生 WKWebView 验证通过；官方文档已通过 GitHub API 读取对应 tag 原文。Windows、macOS、Ubuntu 24.04 三平台 CI 已全部通过。交互式 WebView、密钥环和安装包分发仍需专项验收。
+Wails 固定为 v2.17.0。Phase 0 和 Phase 1 / Task 1 已完成；本机 Go/Vue/SQLite、Keychain、C++ 进程组、Chromium 和原生 WKWebView 验证通过；Windows、macOS、Ubuntu 24.04 三平台 CI 已全部通过。交互式 WebView、密钥环和安装包分发仍需专项验收。
 
