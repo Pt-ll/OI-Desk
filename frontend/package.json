@@ -10,6 +10,7 @@
     "test:phase0": "playwright test"
   },
   "dependencies": {
+    "pinia": "3.0.4",
     "vue": "3.5.45"
   },
   "devDependencies": {
